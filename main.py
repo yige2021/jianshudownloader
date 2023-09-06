@@ -41,25 +41,41 @@ for article_item in article_list.find_all('li'):
 
     sum = sum + 1
 
+    if sum <= 66:
+        continue
+
     # 找到标题所在的<a>标签元素（类名为'title'）
     title_element = article_item.select_one('a.title')
 
     if title_element:
         # 提取文章标题文本与URL
         title = title_element.text
+
+        # 替换标题内的非法字符
+        title = title.replace('|', '')
+        title = title.replace('/', '')
+        title = title.replace('\\', '')
+        title = title.replace(':', '')
+        title = title.replace('"', '')
+        title = title.replace('*', '')
+        title = title.replace('<', '')
+        title = title.replace('>', '')
+
+        # 生成文章url
         href = title_element.get('href')
         href = 'https://www.jianshu.com' + href
 
-
+        # 增加header绕过反爬虫机制
         ua = UserAgent()
         headers = {'User-Agent': ua.random}  # 请求头
-        article_url = href
 
+        # 爬取文章
+        article_url = href
         response = requests.get(article_url, headers=headers)  # 发起请求 简书需要添加headers
         soup = BeautifulSoup(response.text, 'html.parser')
-
         article = soup.find('article', class_='_2rhmJa')  # 使用标签和类名定位
 
+        # 防出错
         if article:
             # 打印文章标题与URL
             print('当前编号' + str(sum) + '，标题：《' + title + '》，链接：' + href)
@@ -70,16 +86,18 @@ for article_item in article_list.find_all('li'):
         # 获取时间并替换冒号
         article_time = soup.find('time')
 
+        # 防出错
         if article_time:
             article_time = article_time.get_text()
         else:
             article_time = 'null'
 
+        # 添加时间、生成文章文本
         article_time = article_time.replace(':', '.')
-
         article_html = article.prettify()  # 将文章对象转换为格式化的HTML字符串
         article_text = BeautifulSoup(article_html, 'html.parser').get_text()
 
+        # 保存
         with open('《' + title + '》' + article_time + '.txt', 'w', encoding='utf-8') as file:
             file.write(article_text)
 
